@@ -2,6 +2,16 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { dummySongs } from "./dummyData";
 
+// ✅ fallback-enabled query function
+const topChartsQuery = async (_arg, _queryApi, _extraOptions, baseQuery) => {
+  const result = await baseQuery("v1/charts/world");
+  if (result.error) {
+    console.warn("⚠️ Falling back to dummy data due to API error:", result.error);
+    return { data: dummySongs };
+  }
+  return result;
+};
+
 export const shazamCoreApi = createApi({
   reducerPath: "shazamCoreApi",
   baseQuery: fetchBaseQuery({
@@ -12,17 +22,7 @@ export const shazamCoreApi = createApi({
     },
   }),
   endpoints: (builder) => ({
-    getTopCharts: builder.query({
-      async queryFn(_arg, _queryApi, _extraOptions, baseQuery) {
-        const result = await baseQuery("v1/charts/world");
-        if (result.error) {
-          console.warn("⚠️ Falling back to dummy data due to API error:", result.error);
-          return { data: dummySongs };
-        }
-        return result;
-      },
-    }),
-    // ✅ you can add similar wrappers for other endpoints if needed
+    getTopCharts: builder.query({ queryFn: topChartsQuery }),
   }),
 });
 
